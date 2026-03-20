@@ -1,0 +1,294 @@
+{% extends "base/base.html" %}
+{% block content %}
+
+
+<style>
+    .sidebar {
+        background: #0f172a;
+        color: #fff;
+        min-height: 100vh;
+    }
+
+    .sidebar a {
+        color: #cbd5e1;
+        text-decoration: none;
+        padding: 10px 15px;
+        display: block;
+        border-radius: 8px;
+        margin-bottom: 5px;
+    }
+
+    .sidebar a:hover {
+        background: #1e293b;
+        color: #fff;
+    }
+
+    .stat-card {
+        border-radius: 12px;
+        padding: 20px;
+        color: #fff;
+    }
+
+    .card-soft {
+        border-radius: 12px;
+        border: none;
+    }
+
+    .data-card {
+        border-radius: 10px;
+        padding: 15px;
+        background: #f8fafc;
+        margin-bottom: 10px;
+        transition: 0.2s;
+    }
+
+    .data-card:hover {
+        background: #eef2f7;
+    }
+
+    .badge-status {
+        font-size: 12px;
+    }
+
+    .mobile-panel {
+        background: #fff;
+        border-radius: 12px;
+        padding: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .panel-item {
+        flex: 0 0 auto;
+        padding: 8px 14px;
+        font-size: 14px;
+        border-radius: 20px;
+        background: #f1f5f9;
+        color: #334155;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: 0.2s;
+    }
+
+    .panel-item:hover {
+        background: #e2e8f0;
+    }
+
+    .panel-item.active {
+        background: #0d6efd;
+        color: #fff;
+    }
+
+    /* Hide scrollbar (clean look) */
+    .mobile-panel::-webkit-scrollbar {
+        display: none;
+    }
+
+    .metric-card {
+        background: #ffffff;
+        padding: 18px 24px;
+        border-radius: 14px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+        text-align: center;
+        flex: 1 1 18%;
+        /* Flex-grow, shrink, base width ~18% */
+        min-width: 150px;
+        /* Prevent cards from shrinking too much */
+        transition: 0.2s;
+    }
+
+    .metric-card span {
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .metric-card h3 {
+        margin-top: 8px;
+        font-weight: 600;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<div class="container-fluid">
+
+    <div class="row">
+        <div class="mobile-panel d-md-none mb-3">
+
+            <div class="d-flex overflow-auto gap-2 pb-2">
+
+                <a href="#overview" class="panel-item active">Overview</a>
+                <a href="#member-analytics" class="panel-item">Analytics</a>
+                <a href="#deposit-form" class="panel-item">Deposit</a>
+                <a href="#my-deposits" class="panel-item">Deposits</a>
+                <a href="#loan-form" class="panel-item">Loan</a>
+                <a href="#my-loans" class="panel-item">My Loans</a>
+                <a href="#repayments" class="panel-item">Repayments</a>
+
+            </div>
+
+        </div>
+        <!-- SIDEBAR -->
+        <div class="col-md-3 col-lg-2 sidebar p-3 d-none d-md-block">
+
+            <h5 class="mb-4">Member Panel</h5>
+
+            <a href="#overview">Overview</a>
+            <a href="#member-analytics">Analytics</a>
+            <a href="#deposit-form">Deposit</a>
+            <a href="#my-deposits">Deposits</a>
+            <a href="#loan-form">Request Loan</a>
+            <a href="#my-loans">Loans</a>
+            <a href="#repayments">Repayments</a>
+
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-md-9 col-lg-10 p-4">
+
+            <h2 class="mb-4 fw-bold">Dashboard</h2>
+
+
+            <!-- OVERVIEW -->
+            <section id="overview">
+                <div class="d-flex flex-wrap justify-content-start gap-3 mb-4">
+                    <div class="metric-card flex-fill">
+                        <span>Total Funds</span>
+                        <h3>{{ fund_balance }}</h3>
+                    </div>
+
+                    <div class="metric-card flex-fill">
+                        <span>Total Deposited</span>
+                        <h3>{{ member.total_deposited }}</h3>
+                    </div>
+
+                    <div class="metric-card flex-fill">
+                        <span>Loan Balance</span>
+                        <h3>{{ member.current_loan_balance }}</h3>
+                    </div>
+
+                    <div class="metric-card flex-fill">
+                        <span>Deposits</span>
+                        <h3>{{ deposit_count }}</h3>
+                    </div>
+
+                    <div class="metric-card flex-fill">
+                        <span>Active Loans</span>
+                        <h3>{{ active_loans }}</h3>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- CHART -->
+            <section id="member-analytics">
+                {% include "analytics/member_analytics.html" %}
+            </section>
+
+
+            <!-- DEPOSIT FORM -->
+            <section id="deposit-form" class="mt-4">
+                {% include "deposits/deposit_form.html" %}
+            </section>
+
+            <!-- MY DEPOSITS -->
+            <section id="my-deposits" class="mt-4">
+
+                <div class="card card-soft p-4 shadow-sm">
+
+                    <h5 class="mb-3">My Deposits</h5>
+                    <div id="depositList">
+                        {% for d in deposits %}
+                        <div class="data-card d-flex justify-content-between align-items-center">
+
+                            <div>
+                                <strong>Rs. {{ d.amount }}</strong>
+                                <div class="text-muted small">{{ d.date }}</div>
+                            </div>
+
+
+                            <span class="badge badge-status
+                {% if d.status == 'approved' %}bg-success
+                {% elif d.status == 'pending' %}bg-warning
+                {% else %}bg-danger{% endif %}">
+                                {{ d.status }}
+                            </span>
+
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No deposits found</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- LOAN REQUEST -->
+            <section id="loan-form" class="mt-4">
+                {% include "loans/loan_req_form.html" %}
+            </section>
+
+            <!-- MY LOANS -->
+            <section id="my-loans">
+
+                {% include "loans/loan_repay_form.html" %}
+
+            </section>
+
+            <!-- REPAYMENTS -->
+            <section id="repayments" class="mt-4">
+
+                <div class="card card-soft p-4 shadow-sm">
+
+                    <h5 class="mb-3">Repayment History</h5>
+                    <div id="repay_list">
+                        {% for p in payments %}
+                        <div class="data-card d-flex justify-content-between align-items-center">
+
+                            <div>
+                                <strong>Loan #{{ p.loan.id }}</strong>
+                                <div class="text-muted small">
+                                    Rs. {{ p.amount }} • {{ p.payment_date }}
+                                </div>
+                            </div>
+
+                            <span class="badge badge-status
+                {% if p.status == 'approved' %}bg-success
+                {% elif p.status == 'pending' %}bg-warning
+                {% else %}bg-danger{% endif %}">
+                                {{ p.status }}
+                            </span>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No repayments found</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </section>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+<!-- SCROLL FIX -->
+<script>
+
+    if (window.location.hash) {
+
+        document.querySelector(window.location.hash)
+            .scrollIntoView({ behavior: "smooth" });
+
+    }
+
+</script>
+
+{% endblock %}

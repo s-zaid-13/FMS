@@ -1,0 +1,104 @@
+{% extends "base/base.html" %}
+
+{% block auth %}
+
+<div class="container" style="max-width: 500px; margin-top: 60px;">
+
+    <div class="card shadow p-4">
+        <h3 class="text-center mb-4">Create Account</h3>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- NON FIELD ERRORS -->
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <!-- NAME -->
+            <div class="mb-3">
+                <label>Name</label>
+                <input type="text" name="name" value="{{ form.name.value|default:'' }}"
+                    class="form-control {% if form.name.errors %}is-invalid{% endif %}">
+
+                {% if form.name.errors %}
+                <div class="invalid-feedback">
+                    {{ form.name.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- EMAIL -->
+            <div class="mb-3">
+                <label>Email</label>
+                <input type="email" name="email" value="{{ form.email.value|default:'' }}"
+                    class="form-control {% if form.email.errors %}is-invalid{% endif %}">
+
+                {% if form.email.errors %}
+                <div class="invalid-feedback">
+                    {{ form.email.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- PASSWORD -->
+            <div class="mb-3">
+                <label>Password</label>
+                <input type="password" name="password1"
+                    class="form-control {% if form.password1.errors %}is-invalid{% endif %}">
+
+                {% if form.password1.errors %}
+                <div class="invalid-feedback">
+                    {{ form.password1.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- CONFIRM PASSWORD -->
+            <div class="mb-3">
+                <label>Confirm Password</label>
+                <input type="password" name="password2"
+                    class="form-control {% if form.password2.errors %}is-invalid{% endif %}">
+
+                {% if form.password2.errors %}
+                <div class="invalid-feedback">
+                    {{ form.password2.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- SUBMIT -->
+            <button type="submit" class="btn btn-primary w-100">
+                Register
+            </button>
+
+        </form>
+
+        <!-- LINKS -->
+        <p class="mt-3 text-center">
+            Already have an account?
+            <a href="{% url 'login' %}">Login</a>
+        </p>
+
+        <!-- GOOGLE LOGIN -->
+        <a href="/accounts/google/login/" class="btn btn-outline-dark w-100 mt-2">
+            <img src="https://developers.google.com/identity/images/g-logo.png" width="18">
+            Continue with Google
+        </a>
+
+    </div>
+
+</div>
+
+<!-- OPTIONAL UX SCRIPT -->
+<script>
+    document.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", function () {
+            this.classList.remove("is-invalid");
+        });
+    });
+</script>
+
+{% endblock %}

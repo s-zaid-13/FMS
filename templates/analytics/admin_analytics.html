@@ -1,0 +1,87 @@
+<div class="card shadow-sm p-4 mb-4">
+
+    <h4 class="mb-4">Financial Analytics</h4>
+
+    <div class="row">
+
+        <div class="col-md-8">
+            <h6 class="mb-3">Monthly Cash Flow</h6>
+            <div id="fundFlowChart"></div>
+        </div>
+
+        <div class="col-md-4">
+            <h6 class="mb-3">Loan Distribution</h6>
+            <div id="loanDistributionChart"></div>
+        </div>
+
+    </div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    var deposits = JSON.parse('{{ monthly_deposits|escapejs }}');
+    var repayments = JSON.parse('{{ monthly_repayments|escapejs }}');
+    var months = JSON.parse('{{ months|escapejs }}');
+
+    if (!months.length) {
+        months = ['No Data'];
+        deposits = [0];
+        repayments = [0];
+    }
+
+    var options = {
+        chart: { type: 'line', height: 350 },
+
+        series: [
+            { name: "Deposits", data: deposits },
+            { name: "Repayments", data: repayments }
+        ],
+
+        xaxis: { categories: months },
+
+        stroke: { curve: 'smooth' }
+    };
+
+    new ApexCharts(document.querySelector("#fundFlowChart"), options).render();
+
+</script>
+<script>
+    var active = parseFloat("{{ active_amount|default:0 }}");
+    var pending = parseFloat("{{ pending_amount|default:0 }}");
+    var repaid = parseFloat("{{ total_repaid_amount|default:0 }}");
+
+    var options = {
+        chart: { type: 'donut', height: 350 },
+
+        series: [
+            active > 0 ? active : 0,
+            pending > 0 ? pending : 0,
+            repaid > 0 ? repaid : 0
+        ],
+
+        labels: [
+            'Active Loans (Risk)',
+            'Pending Approvals',
+            'Recovered Amount'
+        ],
+
+        colors: ['#dc3545', '#ffc107', '#28a745'],
+
+        tooltip: {
+            y: {
+                formatter: function (val) {
+                    return "PKR " + val.toLocaleString();
+                }
+            }
+        },
+
+        legend: {
+            position: 'bottom'
+        }
+    };
+
+    new ApexCharts(
+        document.querySelector("#loanDistributionChart"),
+        options
+    ).render();
+</script>

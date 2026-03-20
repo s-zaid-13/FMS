@@ -1,0 +1,119 @@
+<div class="card shadow-sm p-4 mb-4">
+
+    <h4 class="mb-4">Financial Analytics</h4>
+
+    <div class="row">
+
+        <!--  BIG MAIN CHART -->
+        <div class="col-md-8">
+            <div class="card card-soft p-3 shadow-sm h-100">
+                <h6 class="mb-3">Monthly Cash Flow</h6>
+                <div id="cashFlowChart">
+
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDE PANEL -->
+        <div class="col-md-4 d-flex flex-column gap-3">
+
+            <div class="card card-soft p-3 shadow-sm">
+                <h6>Your Financial Split</h6>
+                <div id="memberDonutChart"></div>
+            </div>
+
+            <div class="card card-soft p-3 shadow-sm">
+                <h6>Loan Progress</h6>
+                <div id="loanProgressChart"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- CHART SCRIPT -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<script>
+    var deposited = parseFloat("{{ member.total_deposited|default:0 }}");
+    var loan = parseFloat("{{ member.current_loan_balance|default:0 }}");
+    var net = deposited - loan;
+
+    var options = {
+        chart: { type: 'donut' },
+
+        series: [
+            deposited > 0 ? deposited : 0,
+            loan > 0 ? loan : 0,
+            net > 0 ? net : 0
+        ],
+
+        labels: [
+            'Total Deposited',
+            'Loan Taken',
+            'Net Funds'
+        ]
+    };
+
+    new ApexCharts(document.querySelector("#memberDonutChart"), options).render();
+
+
+</script>
+
+
+
+<script>
+
+    var deposits = JSON.parse('{{ monthly_deposits|escapejs }}');
+    var repayments = JSON.parse('{{ monthly_repayments|escapejs }}');
+    var months = JSON.parse('{{ months|escapejs }}');
+    if (months.length === 0) {
+        months = [];     // fake label
+        deposits = [];           // fake value
+        repayments = [];
+    }
+    var options = {
+        chart: { type: 'line', height: 300 },
+
+        series: [
+            { name: "Deposits", data: deposits },
+            { name: "Repayments", data: repayments }
+        ],
+        xaxis: { categories: months },
+        colors: ['#4CAF50', '#F44336'], // green deposits, red repayments
+        stroke: { curve: 'smooth', width: 3 },
+        markers: { size: 5 },
+        grid: { borderColor: '#e7e7e7' },
+        tooltip: { shared: true, intersect: false }
+
+    };
+
+    new ApexCharts(document.querySelector("#cashFlowChart"), options).render();
+
+</script>
+
+
+<script>
+    var totalLoan = parseFloat("{{ total_loan_taken|default:0 }}");
+    var remaining = parseFloat("{{ member.current_loan_balance|default:0 }}");
+    var paid = totalLoan - remaining;
+
+    var options = {
+        chart: { type: 'donut' },
+
+        series: [
+            paid > 0 ? paid : 0,
+            remaining > 0 ? remaining : 0
+        ],
+
+        labels: [
+            'Paid',
+            'Remaining'
+        ]
+    };
+
+    new ApexCharts(document.querySelector("#loanProgressChart"), options).render();
+
+</script>

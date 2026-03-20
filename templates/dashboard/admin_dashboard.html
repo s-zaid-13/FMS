@@ -1,0 +1,404 @@
+{% extends "base/base.html" %}
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="row">
+
+        <!-- SIDEBAR -->
+        <div class="mobile-panel d-md-none mb-3">
+            <div class="d-flex overflow-auto gap-2 pb-2">
+                <a href="#overview" class="panel-item active">Overview</a>
+                <a href="#approvals" class="panel-item">Approvals</a>
+                <a href="#analytics" class="panel-item">Analytics</a>
+                <a href="#members" class="panel-item">Members</a>
+                <a href="#transactions" class="panel-item">Transactions</a>
+                <a href="#reports" class="panel-item">Reports</a>
+            </div>
+        </div>
+
+        <!-- Sidebar (Desktop) -->
+        <div class="col-md-3 col-lg-2 sidebar p-3 d-none d-md-block">
+            <h5 class="mb-4">Admin Panel</h5>
+            <a href="#overview">Overview</a>
+            <a href="#approvals">Approvals</a>
+            <a href="#analytics">Analytics</a>
+            <a href="#members">Members</a>
+            <a href="#transactions">Transactions</a>
+            <a href="#reports">Reports</a>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-md-9 col-lg-10 p-4">
+
+            <h2 class="mb-4">Dashboard</h2>
+
+            <!-- OVERVIEW -->
+            <section id="overview">
+                <div class="d-flex flex-wrap justify-content-start gap-3 mb-4">
+
+                    <div class="metric-card flex-fill">
+                        <span>Total Funds</span>
+                        <h3>{{ fund_balance }}</h3>
+                    </div>
+
+                    <div class="metric-card flex-fill">
+                        <span>Members</span>
+                        <h3>{{ members }}</h3>
+                    </div>
+
+                    <div class="metric-card flex-fill">
+                        <span>Deposits</span>
+                        <h3>{{ total_deposits }}</h3>
+                    </div>
+
+                    <div class="metric-card flex-fill">
+                        <span>Outstanding Loans</span>
+                        <h3>{{ outstanding_loans }}</h3>
+                    </div>
+
+                    <div class="metric-card flex-fill">
+                        <span>Active Loans</span>
+                        <h3>{{ active_loans }}</h3>
+                    </div>
+
+                </div>
+            </section>
+
+            <section id="approvals" class="mb-3">
+                {% include 'modals/deposit_modal.html' %}
+                {% include 'modals/loan_modal.html' %}
+                {% include 'modals/repayment_modal.html' %}
+                <h4 class="mb-3">Pending Approvals</h4>
+
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+                        <div class="approval-card">
+                            <h6>Deposit Requests</h6>
+                            <h2 id="pendingDepositCount">{{ pending_deposits }}</h2>
+                            {% if pending_deposits > 0 %}
+                            <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#depositModal">
+                                Review Requests
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="approval-card">
+                            <h6>Loan Requests</h6>
+                            <h2 id="pendingLoanCount">{{ pending_loans }}</h2>
+                            {% if pending_loans > 0 %}
+                            <button class="btn btn-warning w-100" data-bs-toggle="modal" data-bs-target="#loanModal">
+                                Review Requests
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="approval-card">
+                            <h6>Repayments</h6>
+                            <h2 id="pendingRepayCount">{{ pending_repayments }}</h2>
+                            {% if pending_repayments > 0 %}
+                            <button class="btn btn-success w-100" data-bs-toggle="modal"
+                                data-bs-target="#repaymentModal">
+                                Review Requests
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+
+            </section>
+            <section id="analytics">
+                {% include "analytics/admin_analytics.html" %}
+            </section>
+
+            <section id="members">
+
+                <div class="card shadow-sm p-4 mb-4">
+
+                    <h4 class="mb-3">Member Management</h4>
+
+                    <div class="row g-3">
+
+                        {% for m in members_list %}
+
+                        <div class="col-md-6 col-lg-4">
+                            <div class="member-card">
+
+                                <h6>{{ m.user.name }}</h6>
+                                <p class="text-muted small">{{ m.user.email }}</p>
+
+                                <div class="d-flex justify-content-between mt-2">
+                                    <span>Deposited</span>
+                                    <strong>{{ m.total_deposited }}</strong>
+                                </div>
+
+                                <div class="d-flex justify-content-between">
+                                    <span>Loan</span>
+                                    <strong>{{ m.current_loan_balance }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Status</span>
+                                    <strong>{{ m.user.is_active }}</strong>
+                                </div>
+
+                                <button class="btn btn-sm btn-warning w-100 mt-3 edit-btn" data-id="{{ m.id }}"
+                                    data-name="{{ m.user.name }}" data-deposited="{{ m.total_deposited }}"
+                                    data-loan="{{ m.current_loan_balance }}" data-active="{{ m.user.is_active }}"
+                                    data-bs-toggle="modal" data-bs-target="#editMemberModal">
+                                    Edit Member
+                                </button>
+
+
+                            </div>
+                        </div>
+
+                        {% endfor %}
+
+
+
+                    </div>
+                </div>
+                {% include "modals/edit_member_modal.html" %}
+            </section>
+            <section id="transactions">
+                <div class="card shadow-sm p-4 mb-4">
+                    <h4 class="mb-4">Financial Transactions</h4>
+
+                    <!-- Deposits -->
+                    <h5 class="mb-3">Deposits</h5>
+                    <div class="row g-3">
+                        {% for d in deposits %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="transaction-card border rounded p-3 shadow-sm">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-bold">{{ d.member.user.name }}</span>
+                                    <span
+                                        class="badge 
+                            {% if d.status == 'pending' %}bg-warning{% elif d.status == 'approved' %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {{ d.status|title }}
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted">
+                                    <span>Amount:</span>
+                                    <strong>PKR {{ d.amount }}</strong>
+                                </div>
+                                <div class="text-muted mt-1">
+                                    <small>Date: {{ d.date }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No deposit transactions found.</p>
+                        {% endfor %}
+                    </div>
+
+                    <hr>
+
+                    <!-- Loans -->
+                    <h5 class="mb-3 mt-3">Loans</h5>
+                    <div class="row g-3">
+                        {% for l in loans %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="transaction-card border rounded p-3 shadow-sm">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-bold">{{ l.member.user.name }}</span>
+                                    <span
+                                        class="badge 
+                            {% if l.status == 'approved' %}bg-success{% elif l.status == 'pending' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                        {{ l.status|title }}
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted">
+                                    <span>Amount:</span>
+                                    <strong>PKR {{ l.amount }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted">
+                                    <span>Remaining:</span>
+                                    <strong>PKR {{ l.remaining_balance }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No loan transactions found.</p>
+                        {% endfor %}
+                    </div>
+
+                    <hr>
+
+                    <!-- Repayments -->
+                    <h5 class="mb-3 mt-3">Repayments</h5>
+                    <div class="row g-3">
+                        {% for r in repayments %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="transaction-card border rounded p-3 shadow-sm">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-bold">Loan #{{ r.loan.id }}</span>
+                                    <span
+                                        class="badge 
+                            {% if r.status == 'approved' %}bg-success{% elif r.status == 'pending' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                        {{ r.status|title }}
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted">
+                                    <span>Member:</span>
+                                    <strong>{{ r.loan.member.user.name }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted">
+                                    <span>Amount:</span>
+                                    <strong>PKR {{ r.amount }}</strong>
+                                </div>
+                                <div class="text-muted mt-1">
+                                    <small>Date: {{ r.payment_date }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No repayment transactions found.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+
+            <section id="reports">
+                <div class="card shadow-sm p-4 mb-4">
+                    <h4 class="mb-4">Reports & Exports</h4>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="{% url 'export_deposits_report' %}" class="btn btn-dark flex-fill text-center">
+                            <i class="bi bi-file-earmark-text me-2"></i> Deposits Report
+                        </a>
+                        <a href="{% url 'export_loans_report' %}" class="btn btn-secondary flex-fill text-center">
+                            <i class="bi bi-file-earmark-text me-2"></i> Loans Report
+                        </a>
+                        <a href="{% url 'export_members_report' %}" class="btn btn-primary flex-fill text-center">
+                            <i class="bi bi-people me-2"></i> Members Report
+                        </a>
+                    </div>
+                    <p class="text-muted mt-3">Click a button to download the report in Excel/CSV format.</p>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Sidebar */
+    .sidebar {
+        background: #0f172a;
+        color: #fff;
+        min-height: 100vh;
+        border-radius: 12px;
+    }
+
+    .sidebar a {
+        color: #cbd5e1;
+        text-decoration: none;
+        padding: 10px 15px;
+        display: block;
+        border-radius: 8px;
+        margin-bottom: 5px;
+        transition: 0.2s;
+    }
+
+    .sidebar a:hover,
+    .sidebar a.active {
+        background: #1e293b;
+        color: #fff;
+    }
+
+    /* Mobile panel */
+    .mobile-panel {
+        background: #fff;
+        border-radius: 12px;
+        padding: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .mobile-panel .panel-item {
+        flex: 0 0 auto;
+        padding: 8px 14px;
+        font-size: 14px;
+        border-radius: 20px;
+        background: #f1f5f9;
+        color: #334155;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: 0.2s;
+    }
+
+    .mobile-panel .panel-item:hover {
+        background: #e2e8f0;
+    }
+
+    .mobile-panel .panel-item.active {
+        background: #0d6efd;
+        color: #fff;
+    }
+
+    /* Hide scrollbar for cleaner look */
+    .mobile-panel::-webkit-scrollbar {
+        display: none;
+    }
+
+
+
+    .metric-card {
+        background: #ffffff;
+        padding: 18px 24px;
+        border-radius: 14px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+        text-align: center;
+        flex: 1 1 18%;
+        /* Grow/shrink, base width ~18% to fit 5 in a line */
+        min-width: 150px;
+        /* Small screens auto-wrap */
+        transition: 0.2s;
+    }
+
+    .metric-card span {
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .metric-card h3 {
+        margin-top: 8px;
+        font-weight: 600;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+    }
+
+
+
+
+    .approval-card {
+        background: #f8fafc;
+        padding: 20px;
+        border-radius: 14px;
+        text-align: center;
+        transition: 0.2s;
+    }
+
+    .approval-card:hover {
+        background: #eef2f7;
+    }
+
+    .member-card {
+        background: white;
+        padding: 16px;
+        border-radius: 14px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+    }
+</style>
+
+
+
+{% endblock %}

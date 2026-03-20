@@ -1,0 +1,175 @@
+<div class="card deposit-card p-4 mb-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Request Deposit</h5>
+        <span class="badge bg-light text-dark">Secure</span>
+    </div>
+
+    <form method="POST" action="{% url 'create_deposit' %}">
+        {% csrf_token %}
+
+        <!-- Amount -->
+        <div class="mb-3">
+            <label for="amount" class="form-label small text-muted">
+                Amount (PKR)
+            </label>
+
+            <div class="input-group input-group-lg">
+                <span class="input-group-text">Rs</span>
+                <input type="number" class="form-control" id="amount" name="amount" placeholder="Enter amount" required>
+            </div>
+
+            <small class="text-muted">Min: 100 • Max: 100,000</small>
+        </div>
+
+        <!-- Notes -->
+        <div class="mb-3">
+            <label for="notes" class="form-label small text-muted">
+                Notes (optional)
+            </label>
+
+            <textarea class="form-control" id="notes" name="notes" rows="3"
+                placeholder="Transaction ID, bank name, etc."></textarea>
+        </div>
+
+        <!-- Error -->
+        <input type="hidden" id="deposit-url" value="{% url 'create_deposit' %}">
+        <div id="formErrorMessage" class="alert d-none mb-3"></div>
+
+        <!-- Button -->
+        <button type="submit" class="btn btn-success w-100 py-2 fw-semibold" id="depositSubmitBtn">
+            Submit Request
+        </button>
+
+    </form>
+</div>
+<style>
+    .deposit-card {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+    }
+
+    .deposit-card input,
+    .deposit-card textarea {
+        border-radius: 10px;
+    }
+
+    .deposit-card .input-group-text {
+        border-radius: 10px 0 0 10px;
+        background: #f1f5f9;
+    }
+
+    .deposit-card input:focus,
+    .deposit-card textarea:focus {
+        box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.1);
+        border-color: #0d6efd;
+    }
+
+    /* Mobile optimization */
+    @media (max-width: 576px) {
+        .deposit-card {
+            padding: 18px;
+        }
+
+        .deposit-card h5 {
+            font-size: 18px;
+        }
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const form = document.querySelector(`form[action="${document.getElementById('deposit-url').value}"]`);
+        const depositList = document.getElementById("depositList");
+        if (!form) return;
+
+        const errorDiv = document.getElementById('formErrorMessage');
+        const submitBtn = document.getElementById('depositSubmitBtn');
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault(); // ✅ prevent default submit
+            resetAlert();
+            errorDiv.innerHTML = '';
+
+            const amountInput = document.getElementById('amount');
+            const amount = parseFloat(amountInput.value);
+
+            const notesInput = document.getElementById('notes');
+            const notes = notesInput.value.trim();
+
+            if (!amount || isNaN(amount) || amount < 100 || amount > 100000) {
+                showError('Amount must be between 100 and 100,000 PKR.');
+                amountInput.focus();
+                return;
+            }
+
+            if (notes.length > 200) {
+                showError('Notes cannot exceed 200 characters.');
+                notesInput.focus();
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Submitting...';
+
+            let formData = new FormData(form);
+
+            fetch(form.action, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Submit Deposit Request';
+
+                    if (data.success) {
+                        showSuccess('Deposit request submitted successfully.It will be reflected in dashboard after verification.');
+                        const newCard = `
+                    <div class="data-card d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Rs. ${data.deposit.amount}</strong>
+                            <div class="text-muted small">${data.deposit.date}</div>
+                        </div>
+                        <span class="badge bg-warning badge-status">
+                            ${data.deposit.status}
+                        </span>
+                    </div>
+                `;
+
+                        depositList.insertAdjacentHTML("afterbegin", newCard);
+                        form.reset();
+                    } else {
+                        showError(data.error || "Something went wrong");
+                    }
+                })
+                .catch(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Submit Deposit Request';
+                    showError("Server error. Try again.");
+                });
+            function resetAlert() {
+                errorDiv.className = "alert d-none mb-3";
+            }
+
+            function showError(msg) {
+                resetAlert();
+                errorDiv.classList.remove('d-none');
+                errorDiv.classList.add('alert-danger');
+                errorDiv.innerHTML = msg;
+            }
+
+            function showSuccess(msg) {
+                resetAlert();
+                errorDiv.classList.remove('d-none');
+                errorDiv.classList.add('alert-success');
+                errorDiv.innerHTML = msg;
+            }
+        });
+    });
+</script>

@@ -1,0 +1,143 @@
+<div class="modal fade" id="depositModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content shadow-lg border-0">
+
+            <!-- Header -->
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-semibold">
+                    Deposit Requests
+                </h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body p-0">
+
+                {% if deposit_requests %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+
+                        <thead class="table-light">
+                            <tr>
+                                <th>Member</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for d in deposit_requests %}
+                            <tr id="deposit-row-{{d.id}}">
+
+                                <td>
+                                    <div class="fw-medium">{{ d.member.user.name }}</div>
+                                    <small class="text-muted">ID: {{ d.member.id }}</small>
+                                </td>
+
+                                <td>
+                                    <span class="fw-semibold text-success">
+                                        Rs {{ d.amount }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <small class="text-muted">
+                                        {{ d.date }}
+                                    </small>
+                                </td>
+
+                                <td class="text-end">
+
+                                    <button class="btn btn-success btn-sm approve-btn px-3"
+                                        data-url="{% url 'approve_deposit' d.id %}">
+                                        ✓ Approve
+                                    </button>
+
+                                    <button class="btn btn-outline-danger btn-sm reject-btn px-3"
+                                        data-url="{% url 'reject_deposit' d.id %}">
+                                        ✕ Reject
+                                    </button>
+
+                                </td>
+
+                            </tr>
+                            {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+
+                {% else %}
+                <!-- Empty State -->
+                <div class="text-center p-5">
+                    <h6 class="text-muted">No pending deposit requests</h6>
+                </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('click', function (e) {
+        const countEl = document.getElementById("pendingDepositCount");
+        // APPROVE
+        if (e.target.classList.contains('approve-btn')) {
+
+            handleAction(e.target, "approve");
+        }
+
+        // REJECT
+        if (e.target.classList.contains('reject-btn')) {
+
+            handleAction(e.target, "reject");
+        }
+
+        function handleAction(button, type) {
+            if (button.disabled) return;
+            const url = button.dataset.url;
+            const row = button.closest('tr');
+
+            button.disabled = true;
+            button.innerHTML = "Processing...";
+
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+
+                    if (data.success) {
+
+                        // 🔥 remove row instantly
+                        countEl.innerText = data.pending_count;
+                        row.remove();
+
+                    } else {
+
+                        alert(data.error || "Error");
+
+                        button.disabled = false;
+                        button.innerHTML = type === "approve" ? "Approve" : "Reject";
+                    }
+
+                })
+                .catch(() => {
+
+                    alert("Server error");
+
+                    button.disabled = false;
+                    button.innerHTML = type === "approve" ? "Approve" : "Reject";
+                });
+
+        }
+
+    });
+</script>

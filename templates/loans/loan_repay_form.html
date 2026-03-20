@@ -1,0 +1,198 @@
+<div class="card loan-list-card p-4 mb-4">
+
+    <h5 class="mb-3">My Loans</h5>
+    <div id="loanList">
+        {% for loan in loans %}
+
+        <div class="loan-item mb-3">
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+
+                <div>
+                    <strong>Rs. {{ loan.amount }}</strong>
+                    <div class="small text-muted">
+                        Remaining: {{ loan.remaining_balance }}
+                    </div>
+                </div>
+
+                <span class="badge 
+                {% if loan.status == 'approved' %}bg-success
+                {% elif loan.status == 'pending' %}bg-warning
+                {% else %}bg-secondary{% endif %}">
+                    {{ loan.status }}
+                </span>
+
+            </div>
+
+            {% if loan.status == "approved" and loan.remaining_balance > 0 %}
+
+            <form method="POST" action="{% url 'repay_loan' loan.id %}" class="repayment-form">
+
+                {% csrf_token %}
+
+                <div class="d-flex gap-2">
+
+                    <input type="number" class="form-control repayment-amount" name="amount" placeholder="Enter amount"
+                        required>
+
+                    <button type="submit" class="btn btn-success repaySubmitBtn">
+                        Pay
+                    </button>
+
+                </div>
+
+                <input type="hidden" class="repay-url" value="{% url 'repay_loan' loan.id %}">
+
+                <div class="repayErrorMessage alert d-none mt-2"></div>
+
+            </form>
+
+            {% else %}
+
+            <div class="text-muted small">No action available</div>
+
+            {% endif %}
+
+        </div>
+
+        {% empty %}
+        <p class="text-muted">No loans found</p>
+        {% endfor %}
+    </div>
+</div>
+<style>
+    .loan-list-card {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+
+    .loan-item {
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 12px;
+        transition: 0.2s;
+    }
+
+    .loan-item:hover {
+        background: #eef2f7;
+    }
+
+    .repayment-amount {
+        border-radius: 8px;
+    }
+
+    .repaySubmitBtn {
+        white-space: nowrap;
+    }
+
+    /* Mobile optimization */
+    @media (max-width: 576px) {
+
+        .loan-item {
+            padding: 12px;
+        }
+
+        .loan-item .d-flex {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 10px;
+        }
+
+        .repayment-form .d-flex {
+            flex-direction: row !important;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        document.querySelectorAll('.repayment-form').forEach(form => {
+
+            const errorDiv = form.querySelector('.repayErrorMessage');
+            const submitBtn = form.querySelector('.repaySubmitBtn');
+            const amountInput = form.querySelector('.repayment-amount');
+            const repay_list = document.getElementById("repay_list");
+            form.addEventListener('submit', function (e) {
+
+                e.preventDefault();
+
+                errorDiv.className = "alert d-none mb-2";
+
+                const amount = parseFloat(amountInput.value);
+
+                // Client validation
+                if (!amount || amount <= 0) {
+                    showError("Invalid amount");
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = "Processing...";
+
+                let formData = new FormData(form);
+
+                fetch(form.action, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: formData
+                })
+                    .then(res => res.json())
+                    .then(data => {
+
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = "Pay";
+
+                        if (data.success) {
+                            newCard = ` <div class="data-card d-flex justify-content-between align-items-center">
+
+                            <div>
+                                <strong>Loan #${data.payment.loan_id}</strong>
+                                <div class="text-muted small">
+                                    Rs. ${data.payment.amount} • ${data.payment.date}
+                                </div>
+                            </div>
+
+                            <span class="badge bg-warning">
+                                ${data.payment.status}
+                            </span>
+                        </div>
+                            `
+                            repay_list.insertAdjacentHTML('afterbegin', newCard);
+                            showSuccess("Payment submitted! It will be reflected in dashboard after verification.");
+
+                            form.reset();
+
+                        } else {
+                            showError(data.error || "Something went wrong");
+                        }
+                    })
+                    .catch(() => {
+
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = "Pay";
+
+                        showError("Server error");
+                    });
+
+                function showError(msg) {
+                    errorDiv.classList.remove('d-none');
+                    errorDiv.classList.add('alert-danger');
+                    errorDiv.innerHTML = msg;
+                }
+
+                function showSuccess(msg) {
+                    errorDiv.classList.remove('d-none');
+                    errorDiv.classList.add('alert-success');
+                    errorDiv.innerHTML = msg;
+                }
+
+            });
+
+        });
+
+    });
+</script>

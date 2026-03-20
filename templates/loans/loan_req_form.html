@@ -1,0 +1,213 @@
+<div class="card loan-card p-4 mb-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Request Loan</h5>
+        <span class="badge bg-light text-dark">Quick Approval</span>
+    </div>
+
+    <form method="POST" action="{% url 'request_loan' %}">
+        {% csrf_token %}
+
+        <!-- Amount -->
+        <div class="mb-3">
+            <label class="form-label small text-muted">
+                Loan Amount (PKR)
+            </label>
+
+            <div class="input-group input-group-lg">
+                <span class="input-group-text">Rs</span>
+                <input type="number" class="form-control" id="loanAmount" name="amount" placeholder="500 - 2000"
+                    required>
+            </div>
+
+            <small class="text-muted">Allowed: 500 – 2000 PKR</small>
+        </div>
+
+        <!-- Repayment Months -->
+        <div class="mb-3">
+            <label class="form-label small text-muted">
+                Repayment Duration
+            </label>
+
+            <div class="input-group">
+                <input type="number" class="form-control" id="loanMonths" name="repayment_months" placeholder="1 - 3"
+                    required>
+                <span class="input-group-text">Months</span>
+            </div>
+
+            <small class="text-muted">1 to 3 months</small>
+        </div>
+
+        <!-- Reason -->
+        <div class="mb-3">
+            <label class="form-label small text-muted">
+                Reason
+            </label>
+
+            <textarea class="form-control" id="loanReason" name="reason" rows="3"
+                placeholder="Why do you need this loan?" required></textarea>
+        </div>
+
+        <!-- Hidden -->
+        <input type="hidden" id="loan-url" value="{% url 'request_loan' %}">
+
+        <!-- Error -->
+        <div id="loanErrorMessage" class="alert d-none mb-3"></div>
+
+        <!-- Button -->
+        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" id="loanSubmitBtn">
+            Request Loan
+        </button>
+
+    </form>
+
+</div>
+<style>
+    .loan-card {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+    }
+
+    .loan-card input,
+    .loan-card textarea {
+        border-radius: 10px;
+    }
+
+    .loan-card .input-group-text {
+        background: #f1f5f9;
+        border-radius: 10px;
+    }
+
+    .loan-card input:focus,
+    .loan-card textarea:focus {
+        box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.1);
+        border-color: #0d6efd;
+    }
+
+    /* Mobile optimization */
+    @media (max-width: 576px) {
+        .loan-card {
+            padding: 18px;
+        }
+
+        .loan-card h5 {
+            font-size: 18px;
+        }
+    }
+</style>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const form = document.querySelector(
+            `form[action="${document.getElementById('loan-url').value}"]`
+        );
+        const loan_list = document.getElementById("loanList");
+        if (!form) return;
+
+        const errorDiv = document.getElementById('loanErrorMessage');
+        const submitBtn = document.getElementById('loanSubmitBtn');
+
+        form.addEventListener('submit', function (e) {
+
+            e.preventDefault();
+
+            resetAlert();
+
+            const amount = parseFloat(document.getElementById('loanAmount').value);
+            const months = parseInt(document.getElementById('loanMonths').value);
+            const reason = document.getElementById('loanReason').value.trim();
+
+            // Client validation
+            if (!amount || amount < 500 || amount > 2000) {
+                showError("Loan amount must be between 500 and 2000.");
+                return;
+            }
+
+            if (!months || months < 1 || months > 3) {
+                showError("Repayment must be between 1 to 3 months.");
+                return;
+            }
+
+            if (reason.length > 200) {
+                showError("Reason cannot exceed 200 characters.");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = "Submitting...";
+
+            let formData = new FormData(form);
+
+            fetch(form.action, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: formData
+            })
+                .then(res => res.json())
+                .then(data => {
+
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = "Submit Loan Request";
+
+                    if (data.success) {
+
+                        showSuccess("Loan request submitted successfully!");
+                        newCard = ` <div class="loan-item mb-3">
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+
+                <div>
+                    <strong>Rs. ${data.loan.amount}</strong>
+                    <div class="small text-muted">
+                        Remaining: ${data.loan.remaining_balance}
+                    </div>
+                </div>
+
+                <span class="badge bg-warning">
+                    ${data.loan.status}
+                </span>
+            </div>
+            <div class="text-muted small">No action available</div>
+        </div>`;
+                        loan_list.insertAdjacentHTML("afterbegin", newCard);
+                        form.reset();
+
+                    } else {
+                        showError(data.error || "Something went wrong");
+                    }
+                })
+                .catch(() => {
+
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = "Submit Loan Request";
+
+                    showError("Server error. Try again.");
+                });
+
+            function resetAlert() {
+                errorDiv.className = "alert d-none mb-3";
+            }
+
+            function showError(msg) {
+                resetAlert();
+                errorDiv.classList.remove('d-none');
+                errorDiv.classList.add('alert-danger');
+                errorDiv.innerHTML = msg;
+            }
+
+            function showSuccess(msg) {
+                resetAlert();
+                errorDiv.classList.remove('d-none');
+                errorDiv.classList.add('alert-success');
+                errorDiv.innerHTML = msg;
+            }
+
+        });
+    });
+</script>

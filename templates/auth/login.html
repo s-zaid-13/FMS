@@ -1,0 +1,89 @@
+{% extends "base/base.html" %}
+{% block auth %}
+
+<div class="container" style="max-width: 450px; margin-top: 60px;">
+
+    <div class="card shadow p-4">
+        <h3 class="text-center mb-4">Login</h3>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- NON FIELD ERRORS -->
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-danger">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- EMAIL -->
+            <div class="mb-3">
+                <label>Email</label>
+                <input type="email" name="email" value="{{ form.email.value|default:'' }}"
+                    class="form-control {% if form.email.errors %}is-invalid{% endif %}">
+
+                {% if form.email.errors %}
+                <div class="invalid-feedback">
+                    {{ form.email.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- PASSWORD -->
+            <div class="mb-3">
+                <label>Password</label>
+                <input type="password" name="password"
+                    class="form-control {% if form.password.errors %}is-invalid{% endif %}">
+
+                {% if form.password.errors %}
+                <div class="invalid-feedback">
+                    {{ form.password.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- SUBMIT -->
+            <button type="submit" class="btn btn-primary w-100">
+                Login
+            </button>
+
+        </form>
+
+        <!-- LINKS -->
+        <p class="mt-2 text-center">
+            <a href="{% url 'password_reset' %}">
+                Forgot Password?
+            </a>
+        </p>
+
+        <p class="mt-2 text-center">
+            Don't have an account?
+            <a href="{% url 'signup' %}">Sign Up</a>
+        </p>
+
+        <!-- GOOGLE LOGIN -->
+        <a href="/accounts/google/login/" class="btn btn-outline-dark w-100 mt-3">
+            <img src="https://developers.google.com/identity/images/g-logo.png" width="18">
+            Continue with Google
+        </a>
+
+    </div>
+
+</div>
+
+<!-- OPTIONAL UX SCRIPT -->
+<script>
+    document.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", function () {
+            this.classList.remove("is-invalid");
+        });
+    });
+</script>
+
+{% endblock %}
