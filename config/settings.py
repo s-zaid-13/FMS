@@ -29,7 +29,6 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost").split(",")
 
-print(ALLOWED_HOSTS)
 
 # Application definition
 
